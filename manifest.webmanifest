@@ -1,0 +1,19 @@
+{
+  "name": "Hot Tub Hero — The Long Forest Trip",
+  "short_name": "Hot Tub Hero",
+  "description": "A mobile-ready 16-bit forest trip game for the seven-person hot tub ritual.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "theme_color": "#0b1020",
+  "background_color": "#05070d",
+  "icons": [
+    {
+      "src": "icons/hot-tub-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

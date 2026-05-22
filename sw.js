@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hot-tub-hero-pwa-v1';
+const CACHE_NAME = 'hot-tub-hero-pwa-v2-controls-landscape';
 const APP_SHELL = [
   './',
   './index.html',
@@ -38,13 +38,13 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(request, { ignoreSearch: true })
-      .then(cached => cached || fetch(request).then(response => {
+    fetch(request)
+      .then(response => {
         if (!response || response.status !== 200 || response.type !== 'basic') return response;
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
         return response;
-      }))
-      .catch(() => caches.match('./index.html'))
+      })
+      .catch(() => caches.match(request, { ignoreSearch: true }).then(cached => cached || caches.match('./index.html')))
   );
 });

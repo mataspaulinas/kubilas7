@@ -1,0 +1,150 @@
+,${a*.75})`); g.addColorStop(1,`rgba(255,175,90,${a*.9})`);
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }
+    if(player.tabs>=1||player.mushroomTimer>0){
+      ctx.save(); ctx.globalAlpha=player.tabs>=2?.23:.14;
+      const t=now()/300;
+      for(let i=0;i<8;i++){
+        ctx.fillStyle=`hsla(${(t*40+i*60)%360},95%,60%,.18)`;
+        ctx.beginPath(); ctx.arc(W*.5+Math.cos(t+i)*250,H*.5+Math.sin(t*1.2+i)*120,180-i*14,0,Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    if(player.tabs>=2){
+      const t=now()/80;
+      ctx.save();
+      for(let i=0;i<18;i++){
+        const y=((i*39+t*5)%H);
+        ctx.fillStyle=`hsla(${(i*40+t*20)%360},100%,60%,${.04+(i%3)*.03})`;
+        ctx.fillRect(0,y,W,4+(i%4)*4);
+      }
+      ctx.globalAlpha=.25; ctx.strokeStyle='#ff33ff'; ctx.lineWidth=8; ctx.strokeRect(8+Math.sin(t)*5,88+Math.cos(t)*3,W-16,H-102);
+      ctx.strokeStyle='#00fff0'; ctx.strokeRect(14+Math.cos(t)*5,92+Math.sin(t)*3,W-28,H-110);
+      ctx.restore();
+    }
+  }
+
+  function drawScene(){
+    drawBackground();
+    platforms.forEach(drawPlatform);
+    drawGroundDetails();
+    drawCollectibles();
+    drawObstacles();
+    drawUncollectedFriends();
+    drawHotTub();
+    drawFollowers();
+    drawPlayer();
+    drawHUD();
+    drawMessage();
+    drawBottomBanner();
+    drawTripOverlays();
+  }
+
+  function resetPlayerOnly(){
+    player.x=80; player.y=GROUND-player.h; player.vx=0; player.vy=0; player.onGround=false; player.face=1;
+    player.invuln=60; player.warmFlash=0; player.trippy=0; player.meltdown=0; player.mushroomTimer=0;
+    player.overdoseTimer=0; player.deepTripTimer=0; camera.x=0; camera.shakeX=0; camera.shakeY=0;
+  }
+
+  function fullRestart(){
+    Object.assign(player,{
+      x:80,y:GROUND-96,vx:0,vy:0,onGround:false,face:1,lives:3,diamonds:0,mushrooms:0,tabs:0,completed:false,trueEnding:false,
+      invuln:0,warmFlash:0,trippy:0,meltdown:0,mushroomTimer:0,overdoseTimer:0,overdoseUsed:false,
+      deepTripTimer:0,deepLandingMessage:0,activeLead:'hero',winSound:false
+    });
+    diamonds.forEach(d=>d.got=false); mushrooms.forEach(m=>m.got=false); tabs.forEach(t=>t.got=false);
+    friends.forEach(f=>{f.collected=false; f.fx=f.x; f.fy=f.y;});
+    heroFollower.fx=80; heroFollower.fy=GROUND-96;
+    camera.x=0; camera.shakeX=0; camera.shakeY=0;
+    setMessage('Saturday morning. The forest villa ritual begins.',360);
+  }
+
+  function applyHazards(rect){
+    mudPuddles.forEach(m=>{
+      if(rectsOverlap(rect,{x:m.x,y:m.y,w:m.w,h:m.h})){
+        player.vx*=0.78;
+        if(player.mushroomTimer>0) player.vx*=0.96;
+      }
+    });
+    lowBranches.forEach(b=>{
+      if(player.invuln<=0 && rectsOverlap(rect,b)){
+        player.vx*=-.6; player.vy=-6; player.invuln=50; setMessage('Low branch disagreed with your forehead.',120);
+      }
+    });
+    bubbles.forEach(b=>{
+      const by=b.y+Math.sin(now()/520+b.phase)*14;
+      if(player.invuln<=0 && circleHitRect(b.x,by,b.r+8,rect)){
+        player.lives--; player.vx=-player.face*8; player.vy=-8; player.invuln=90; setMessage('Soap bubble ambush.',120);
+        if(player.lives<=0) fullRestart();
+      }
+    });
+    mosquitoes.forEach(m=>{
+      const mx=m.x+Math.sin(now()/240+m.phase)*28, my=m.y+Math.cos(now()/210+m.phase)*20;
+      if(player.invuln<=0 && circleHitRect(mx,my,m.r*.45,rect)){
+        player.vx*=.4; player.invuln=60; setMessage('Mosquito council has voted against you.',140);
+      }
+    });
+    fish.forEach(f=>{
+      const t=now()/380+f.phase, leap=Math.max(0,Math.sin(t)), fx=f.x+Math.cos(t*.7)*45, fy=f.baseY-leap*95;
+      if(leap>.08 && player.invuln<=0 && circleHitRect(fx,fy,24,rect)){
+        player.vx=-player.face*8; player.vy=-10; player.invuln=90; setMessage('Psychedelic fish uppercut.',140);
+      }
+    });
+  }
+
+  function update(){
+    if(keys.restart){ fullRestart(); keys.restart=false; }
+
+    audio.setMode(player.deepTripTimer>0?'cosmic':player.tabs>=2?'meltdown':player.tabs>=1?'psy':'techno');
+
+    camera.shakeX = player.tabs>=2 ? Math.sin(now()/23)*7 + Math.cos(now()/37)*4 : 0;
+    camera.shakeY = player.tabs>=2 ? Math.cos(now()/31)*5 : 0;
+
+    if(messageTimer>0) messageTimer--;
+    if(player.warmFlash>0) player.warmFlash--;
+    if(player.invuln>0) player.invuln--;
+    if(player.mushroomTimer>0) player.mushroomTimer--;
+    if(player.deepLandingMessage>0) player.deepLandingMessage--;
+
+    if(player.completed){
+      if(keys.jumpPressed) fullRestart();
+      keys.jumpPressed=false;
+      updateFollowers();
+      camera.x=Math.max(0,Math.min(WORLD-W,player.x-W*.42));
+      return;
+    }
+
+    if(player.deepTripTimer>0){
+      player.deepTripTimer--;
+      player.x += 1.2;
+      player.y = 190 + Math.sin(now()/260)*50;
+      if(player.deepTripTimer===1){
+        const leadCandidate = friends.find(f=>f.collected);
+        if(leadCandidate){
+          player.activeLead=leadCandidate.id;
+          heroFollower.fx=player.x-80; heroFollower.fy=player.y+20;
+          setMessage(leadCandidate.short+' takes the lead. Original hero is now a glowing passenger.',360);
+        } else {
+          setMessage('No friend was steady enough to take over. Hero returns, barely.',300);
+        }
+        player.x=Math.max(player.x,11200); player.y=GROUND-player.h; player.vx=0; player.vy=0; player.invuln=120; player.deepLandingMessage=300;
+      }
+      updateFollowers();
+      camera.x=Math.max(0,Math.min(WORLD-W,player.x-W*.42));
+      return;
+    }
+
+    if(player.overdoseTimer>0){
+      player.overdoseTimer--;
+      player.vx*=.86; player.vy+=.4; player.y=Math.min(GROUND-player.h,player.y+player.vy);
+      if(player.overdoseTimer===1) setMessage('He is back. Still smiling. Possibly too sparkly.',180);
+      updateFollowers();
+      camera.x=Math.max(0,Math.min(WORLD-W,player.x-W*.42));
+      return;
+    }
+
+    const mushroom = player.mushroomTimer>0;
+    const speedBoost = Math.min(2.4, player.diamonds*.055) + (mushroom?1.35:0);
+    const maxSpeed = 6.0 + speedBoost;
+    const accel = mushroom ? .82 : .9;
+    const friction = player.onGroun

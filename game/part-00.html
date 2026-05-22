@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hot Tub Hero — The Long Forest Trip</title>
+<style>
+  :root{--gold:#cc8f2e;--cream:#ffe3a6;}
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;height:100%;overflow:hidden;
+    background:radial-gradient(circle at 50% 10%,#1d2446 0,#0b1020 40%,#05070d 100%);
+    color:var(--cream);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-text-size-adjust:100%;
+  }
+  body{position:fixed;inset:0;width:100%;height:100%;}
+  .wrap{
+    width:100vw;height:100vh;display:grid;grid-template-rows:1fr auto;
+    gap:8px;padding:10px;place-items:center;
+  }
+  .frame{
+    position:relative;width:min(100vw - 20px,1180px);aspect-ratio:16/9;
+    max-height:calc(100vh - 106px);
+    border:5px solid #09070d;outline:3px solid var(--gold);border-radius:14px;
+    background:#09070d;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.55);
+  }
+  canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;}
+  .hint{
+    position:absolute;left:12px;bottom:12px;padding:8px 10px;
+    border:2px solid rgba(204,143,46,.75);background:rgba(10,8,12,.65);
+    color:#f6d89a;font-size:12px;border-radius:8px;pointer-events:none;
+  }
+  .controls{
+    width:min(100vw - 20px,760px);display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;user-select:none;
+  }
+  button{
+    min-height:60px;border:3px solid #3f2812;outline:2px solid var(--gold);border-radius:12px;
+    background:linear-gradient(#2a2236,#17131d);color:var(--cream);
+    font:800 18px/1 ui-monospace,monospace;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.10),0 8px 18px rgba(0,0,0,.28);
+    touch-action:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button.down,button:active{transform:translateY(2px);background:linear-gradient(#352842,#1d1622);color:#fff3c3;}
+
+  .start-overlay{
+    position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+    padding:18px;text-align:center;background:rgba(3,4,9,.74);backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);pointer-events:auto;
+  }
+  .start-overlay.hidden{display:none;}
+  .start-card{
+    width:min(92%,430px);border:3px solid var(--gold);border-radius:18px;padding:18px 16px 16px;
+    background:linear-gradient(180deg,rgba(42,34,54,.94),rgba(13,10,18,.94));
+    box-shadow:0 18px 60px rgba(0,0,0,.45);
+  }
+  .start-card strong{display:block;font-size:25px;line-height:1.1;color:#fff0bd;margin-bottom:8px;}
+  .start-card span{display:block;font-size:13px;line-height:1.45;color:#f6d89a;margin-bottom:14px;}
+  .start-card button{width:100%;min-height:56px;font-size:20px;}
+
+  @media (max-width:899px){
+    .wrap{
+      width:100vw;height:100svh;height:100dvh;display:flex;align-items:center;justify-content:center;
+      padding:6px;gap:0;place-items:center;
+    }
+    .frame{
+      width:min(calc(100vw - 12px),calc((100svh - 12px) * 16 / 9));
+      width:min(calc(100vw - 12px),calc((100dvh - 12px) * 16 / 9));
+      max-height:calc(100svh - 12px);max-height:calc(100dvh - 12px);
+      border:3px solid #09070d;outline:2px solid var(--gold);border-radius:12px;
+      box-shadow:0 10px 34px rgba(0,0,0,.50);
+    }
+    .hint{display:none;}
+    .controls{
+      position:fixed;z-index:40;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));
+      bottom:max(8px,env(safe-area-inset-bottom));width:auto;display:grid;grid-template-columns:72px 72px 1fr 102px;
+      gap:10px;align-items:end;pointer-events:none;user-select:none;
+    }
+    .controls button{
+      pointer-events:auto;min-height:66px;border-radius:999px;font-size:14px;line-height:1.05;
+      background:linear-gradient(rgba(42,34,54,.82),rgba(17,13,22,.86));
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.38);
+    }
+    #leftBtn{grid-column:1;grid-row:1;}
+    #rightBtn{grid-column:2;grid-row:1;}
+    #jumpBtn{grid-column:4;grid-row:1;min-height:76px;font-size:15px;}
+  }
+
+  @media (max-width:899px) and (orientation:portrait){
+    .wrap{align-items:flex-start;padding-top:calc(18px + env(safe-area-inset-top));}
+    .frame{width:calc(100vw - 12px);max-height:58svh;max-height:58dvh;}
+    .controls{grid-template-columns:64px 64px 1fr 88px;gap:8px;}
+    .controls button{min-height:60px;font-size:12px;}
+    #jumpBtn{min-height:68px;font-size:13px;}
+    .start-card::after{content:'Turn the phone sideways for the proper game view.';display:block;margin-top:10px;color:#b9ffff;font-size:11px;line-height:1.35;}
+  }
+
+  @media (min-width:900px){.controls{display:none}.frame{max-height:calc(100vh - 28px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="frame">
+    <canvas id="game" width="960" height="540" aria-label="Hot Tub Hero Forest Trip"></canvas>
+    <div class="hint">Move: ← → / A D · Jump: Space / ↑ · Collect all 6 friends — total crew: 7 · Tabs change reality · Music starts on first input</div>
+    <div id="startOverlay" class="start-overlay" aria-label="Start game">
+      <div class="start-card">
+        <strong>Hot Tub Hero</strong>
+        <span>Tap start once to unlock Safari audio and controls. Use ← / → on the left and JUMP on the right.</span>
+        <button id="startBtn" type="button">START</button>
+      </div>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="leftBtn">← LEFT</button>
+    <button id="jumpBtn">JUMP</button>
+    <button id="rightBtn">RIGHT →</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const startOverlay = document.getElementById('startOverlay');
+  const startBtn = document.getElementById('startBtn')

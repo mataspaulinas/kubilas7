@@ -26,6 +26,7 @@
     <p>Loading the forest trip…</p>
     <p class="small">On iPhone: open from the GitHub Pages URL in Safari, rotate sideways, tap START, then use Share → Add to Home Screen.</p>
   </main>
+  <script src="roster-patch.js?v=2026-05-22-roster-1"></script>
   <script>
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -63,11 +64,13 @@
       </style>`;
       try{
         const html = (await Promise.all(parts.map(async path=>{
-          const response = await fetch(path + '?v=2026-05-22-controls-landscape', {cache:'no-store'});
+          const response = await fetch(path + '?v=2026-05-22-roster-1', {cache:'no-store'});
           if(!response.ok) throw new Error(`${path}: ${response.status} ${response.statusText}`);
           return response.text();
         }))).join('');
-        const patchedHtml = html.includes('touch-landscape-control-fix') ? html : html.replace('</head>', `${touchLandscapeControlFix}</head>`);
+        const patchedHtml = window.patchHotTubHeroHtml
+          ? window.patchHotTubHeroHtml(html, touchLandscapeControlFix)
+          : (html.includes('touch-landscape-control-fix') ? html : html.replace('</head>', `${touchLandscapeControlFix}</head>`));
         document.open();
         document.write(patchedHtml);
         document.close();

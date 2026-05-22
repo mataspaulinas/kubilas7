@@ -1,8 +1,9 @@
-const CACHE_NAME = 'hot-tub-hero-pwa-v2-controls-landscape';
+const CACHE_NAME = 'hot-tub-hero-pwa-v3-roster';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './roster-patch.js',
   './icons/hot-tub-icon.svg',
   './game/part-00.html',
   './game/part-01.html',

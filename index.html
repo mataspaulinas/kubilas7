@@ -2,11 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>Hot Tub Hero — Loading</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/hot-tub-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/hot-tub-icon.svg">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Hot Tub Hero">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="Hot Tub Hero">
   <style>
     html,body{margin:0;height:100%;background:radial-gradient(circle at 50% 10%,#1d2446 0,#0b1020 40%,#05070d 100%);color:#ffe3a6;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;overflow:hidden;}
-    body{display:grid;place-items:center;padding:24px;text-align:center;}
+    body{display:grid;place-items:center;padding:24px;text-align:center;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;}
     .card{width:min(520px,92vw);border:3px solid #cc8f2e;border-radius:18px;padding:22px 18px;background:rgba(10,8,12,.78);box-shadow:0 18px 60px rgba(0,0,0,.45)}
     h1{font-size:26px;margin:0 0 10px;color:#fff0bd}p{font-size:14px;line-height:1.5;margin:8px 0}.small{font-size:12px;color:#d4c29d}.error{color:#ffb7b7;white-space:pre-wrap;text-align:left}
   </style>
@@ -15,15 +24,18 @@
   <main class="card" id="status">
     <h1>Hot Tub Hero</h1>
     <p>Loading the forest trip…</p>
-    <p class="small">On iPhone: open from the GitHub Pages URL in Safari, rotate sideways, then tap START.</p>
+    <p class="small">On iPhone: open from the GitHub Pages URL in Safari, rotate sideways, tap START, then use Share → Add to Home Screen.</p>
   </main>
   <script>
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
     (async function loadGame(){
       const status = document.getElementById('status');
       const parts = Array.from({length:9},(_,i)=>`game/part-${String(i).padStart(2,'0')}.html`);
       try{
         const html = (await Promise.all(parts.map(async path=>{
-          const response = await fetch(path + '?v=2026-05-22-mobile', {cache:'no-store'});
+          const response = await fetch(path + '?v=2026-05-22-pwa', {cache:'no-store'});
           if(!response.ok) throw new Error(`${path}: ${response.status} ${response.statusText}`);
           return response.text();
         }))).join('');

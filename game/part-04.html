@@ -1,0 +1,141 @@
+   }
+      ctx.restore();
+      for(let i=0;i<28;i++){
+        const x=(i*83 + Math.sin(t+i)*300)%W, y=(i*61 + Math.cos(t*.8+i)*220)%H;
+        drawTab(x,y,2);
+      }
+      text('DEEP TRIP',W/2,100,44,'#ffb7ff','center');
+      text('the forest dissolves · someone else may need to lead',W/2,150,18,'#dffcff','center');
+      return;
+    }
+
+    const g=ctx.createLinearGradient(0,82,0,H);
+    if(trip>=2){
+      g.addColorStop(0,`hsl(${(t*230)%360} 95% 22%)`);
+      g.addColorStop(.45,`hsl(${(80+t*260)%360} 95% 16%)`);
+      g.addColorStop(1,'#080010');
+    } else if(trip>=1 || player.mushroomTimer>0){
+      g.addColorStop(0,`hsl(${(t*75+40)%360} 75% 24%)`);
+      g.addColorStop(.6,`hsl(${(t*100+190)%360} 70% 15%)`);
+      g.addColorStop(1,'#110817');
+    } else {
+      g.addColorStop(0,z.sky1); g.addColorStop(.62,z.sky2); g.addColorStop(1,'#081015');
+    }
+    ctx.fillStyle=g; ctx.fillRect(0,82,W,H-82);
+
+    // Sun / moon / strange sky object
+    const progress=player.x/WORLD;
+    const sunX=120 + progress*720, sunY=120 + Math.sin(progress*Math.PI)*70;
+    px(sunX,sunY,42,42,trip>=2?'#ff44e7':progress>.78?'#a98cff':'#ffd86b');
+    px(sunX+8,sunY+8,26,26,trip>=1?'#fffd8b':'#fff0aa');
+
+    // Stars / sparkle particles
+    for(let i=0;i<120;i++){
+      const wx=(i*173+37)%WORLD, x=((wx-camera.x*.2)%(W+30)+W+30)%(W+30)-15;
+      const y=94+((i*59+11)%210), sz=i%9===0?3:2;
+      const c=trip>=1?`hsl(${(i*23+t*160)%360} 90% 72%)`:(progress>.72?(i%3?'#d7d2ff':'#ffd274'):'#eff7ff');
+      px(x,y,sz,sz,c);
+    }
+
+    // Parallax forest layers
+    for(let layer=0;layer<3;layer++){
+      for(let i=0;i<14;i++){
+        const spacing=410-layer*45;
+        const base=(i*spacing + layer*180 - camera.x*(.18+layer*.12));
+        const x=((base%(W+240))+W+240)%(W+240)-150;
+        const trunkH=190+layer*55, y=GROUND-trunkH+20+layer*18;
+        const trunk=trip>=2?`hsl(${(i*31+t*120)%360} 70% 20%)`:layer===0?'#1b2417':layer===1?'#263517':'#3d4b1f';
+        px(x,y,24+layer*4,trunkH,trunk);
+        px(x+7,y,8,trunkH,trip>=1?`hsl(${(70+i*18+t*90)%360} 65% 32%)`:'#5b3719');
+        for(let k=0;k<5;k++){
+          const c1=trip>=1?`hsl(${(45*k+i*15+t*110)%360} 75% ${26+layer*8}%)`:(layer===0?'#16351d':layer===1?'#215226':'#2f702f');
+          px(x-68+k*32,y-16+k*5,98,18,c1);
+          px(x-45+k*28,y+3+k*6,78,14,c1);
+        }
+      }
+    }
+
+    if(trip>=2){
+      // Reality fracture overlays
+      for(let i=0;i<28;i++){
+        ctx.fillStyle=`hsla(${(i*37+t*180)%360},95%,${35+(i%5)*7}%,${.11+(i%4)*.02})`;
+        ctx.beginPath();
+        const x=((i*91+Math.sin(t+i)*260)%(W+240))-120, y=90+((i*47+Math.cos(t*1.4+i)*160)%(H-70));
+        ctx.moveTo(x,y); ctx.lineTo(x+80+(i%5)*28,y+Math.sin(t+i)*80); ctx.lineTo(x-40+Math.cos(t+i)*60,y+120+(i%3)*30); ctx.closePath(); ctx.fill();
+      }
+    }
+  }
+
+  function drawPlatform(p){
+    const pp=platformPos(p), x=sx(pp.x), y=sy(pp.y), trip=player.tabs;
+    const top = trip>=2 ? '#ff61ff' : (p.type==='lily'?'#67c96d':p.type==='riverlog'?'#9a6631':p.type==='fairy'?'#d5a2ff':palette.gold);
+    const body = trip>=2 ? `hsl(${(pp.x+now()/8)%360} 80% 32%)` :
+      p.type==='lily'?'#285f32':p.type==='riverlog'?'#5f3518':p.type==='mush'?'#33203e':'#26170e';
+    px(x,y,pp.w,pp.h,body); px(x,y,pp.w,8,top);
+    if(p.type==='lily'){ px(x+12,y-6,24,6,'#99e892'); px(x+pp.w-38,y-5,26,5,'#99e892'); }
+    else for(let i=0;i<pp.w;i+=34) px(x+i+4,y+14,24,6,trip>=2?`hsl(${(i+now()/10)%360} 90% 50%)`:'#4d321d');
+  }
+
+  function drawGroundDetails(){
+    mudPuddles.forEach(m=>{
+      const x=sx(m.x), y=sy(m.y);
+      px(x,y,m.w,m.h,'#3b2312'); px(x,y+2,m.w,6,'#6b4324');
+      for(let i=0;i<m.w;i+=35) px(x+i+8,y+3,18,4,'#a06a3a');
+    });
+    lowBranches.forEach(b=>{
+      const x=sx(b.x), y=sy(b.y);
+      px(x,y,b.w,b.h,'#4d2f18'); px(x+8,y-10,32,10,'#1f4d24'); px(x+56,y-12,42,12,'#246028');
+    });
+  }
+
+  function drawCollectibles(){
+    diamonds.forEach(d=>{
+      if(d.got) return;
+      const y=d.y+Math.sin(now()/180+d.x)*5;
+      drawGem(sx(d.x),sy(y),1);
+    });
+    mushrooms.forEach(m=>{
+      if(m.got) return;
+      drawMushroom(sx(m.x),sy(m.y+Math.sin(now()/220+m.x)*4),1);
+    });
+    tabs.forEach((t,i)=>{
+      if(t.got) return;
+      drawTab(sx(t.x),sy(t.y+Math.sin(now()/210+t.x)*5),1);
+      text('TAB '+(i+1),sx(t.x)+13,sy(t.y-16),10,'#ffe8a5','center');
+    });
+  }
+
+  function drawObstacles(){
+    bubbles.forEach(b=>{
+      const x=sx(b.x), y=sy(b.y+Math.sin(now()/520+b.phase)*14);
+      px(x-18,y-12,36,28,'rgba(180,220,255,.20)'); px(x-12,y-20,24,16,'rgba(255,244,210,.30)');
+      px(x-8,y-8,8,8,'#f6f0bd'); px(x+8,y+4,6,6,'#f6f0bd'); text('SOAP',x,y-44,12,'#dcecff','center');
+    });
+    mosquitoes.forEach(m=>{
+      const x=sx(m.x+Math.sin(now()/240+m.phase)*28), y=sy(m.y+Math.cos(now()/210+m.phase)*20);
+      for(let i=0;i<8;i++){
+        const a=i*Math.PI*2/8+now()/250;
+        px(x+Math.cos(a)*m.r*.55,y+Math.sin(a)*m.r*.35,5,5,'#1d1010');
+        px(x+Math.cos(a)*m.r*.55+4,y+Math.sin(a)*m.r*.35-3,5,3,'rgba(210,240,255,.6)');
+      }
+      text('MOSQUITO ZONE',x,y-m.r,12,'#ffb7b7','center');
+    });
+    fish.forEach(f=>{
+      const t=now()/380+f.phase;
+      const leap=Math.max(0,Math.sin(t));
+      const x=sx(f.x+Math.cos(t*.7)*45), y=sy(f.baseY-leap*95);
+      if(leap>.08){
+        px(x-18,y,36,14,player.tabs>=1?`hsl(${(f.x+now()/8)%360} 90% 60%)`:'#3fc1ff');
+        px(x+13,y+4,12,8,'#2b78aa'); px(x-22,y+4,9,9,'#7be8ff'); px(x+5,y+3,3,3,'#000');
+      }
+    });
+  }
+
+  function drawCharacterBase(x,y,opts={},scale=1){
+    const s=scale, tint=opts.tint||null, kind=opts.kind||'hero';
+    const skin1=tint||opts.skin1||palette.skin1, skin2=tint||opts.skin2||palette.skin2, skin3=tint||opts.skin3||palette.skin3;
+    const shirt=opts.shirt||'#355dc4', hair=opts.hair||palette.beard, cap=opts.cap||palette.cap, face=opts.face||player.face;
+
+    if(kind==='mud'){
+      px(x,y+32*s,62*s,20*s,'#5b351f'); px(x+8*s,y+18*s,38*s,18*s,skin2); px(x+11*s,y+16*s,30*s,6*s,hair);
+      px(x+17*s,y+25*s,

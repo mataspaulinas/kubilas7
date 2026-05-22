@@ -1,0 +1,104 @@
+?.08:.06,cosmic?2600:wild?5200:3300,cosmic?4:wild?18:10,true));
+      noise(t,cosmic?.35:wild?.22:.12,cosmic?.12:wild?.17:.10,wild?14000:10000,cosmic?400:wild?900:2400);
+    }
+    function friend(){ if(!ensure()) return; const t=ctxA.currentTime+.01; [523.25,659.25,783.99].forEach((f,i)=>tone(f,t+i*.055,.09,'triangle',.045,delay)); }
+    function win(){ if(!ensure()) return; const t=ctxA.currentTime+.02; [392,493.88,587.33,783.99,987.77,1174.66].forEach((f,i)=>tone(f,t+i*.065,.12,'triangle',.055,delay)); }
+    return {start,setMode,sparkle,tabHit,friend,win};
+  })();
+
+  function beginGame(e){
+    if(e && e.preventDefault) e.preventDefault();
+    audio.start();
+    if(startOverlay) startOverlay.classList.add('hidden');
+  }
+
+  if(startBtn) startBtn.addEventListener('pointerdown', beginGame, {passive:false});
+  if(startOverlay) startOverlay.addEventListener('pointerdown', beginGame, {passive:false});
+  document.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
+  document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});
+  window.addEventListener('blur', () => {
+    keys.left=false; keys.right=false; keys.jump=false; keys.jumpPressed=false;
+    document.querySelectorAll('button.down').forEach(b=>b.classList.remove('down'));
+  });
+
+  const palette = {
+    black:'#08070a', gold:'#cc8f2e', gold2:'#ffd274', cream:'#ffe3a6',
+    pink:'#de64ff', pink2:'#ff9af4', purple:'#8b3dd9', red:'#df4334',
+    blue:'#4aa5ff', green:'#6fd472', gem:'#4ae2ff', gem2:'#baf7ff',
+    paper:'#fff8df', paper2:'#f7edcf', grid:'#a9d8ff', grid2:'#79bef5',
+    skin1:'#c77741', skin2:'#ef9e59', skin3:'#ffc582', beard:'#5d3c2a',
+    cap:'#26252d', cap2:'#44424c', water1:'#6b4a22', water2:'#cd8e36',
+    water3:'#f4c86e', tub:'#6d4a2b', tubDark:'#3a2416'
+  };
+
+  const zones = [
+    {name:'Forest Villa & Morning Path', start:0, end:2200, sky1:'#86c5ff', sky2:'#d6f0ff', ground:'#73542c'},
+    {name:'The Long Walk', start:2200, end:5200, sky1:'#62a9dd', sky2:'#e7d27c', ground:'#664221'},
+    {name:'Laughing Clearing & River Zone', start:5200, end:8200, sky1:'#f2b866', sky2:'#6db6e8', ground:'#485c24'},
+    {name:'Deep Jungle Madness', start:8200, end:11200, sky1:'#23452c', sky2:'#102719', ground:'#34391a'},
+    {name:'Evening Return & Hot Tub Setup', start:11200, end:14200, sky1:'#5e3a91', sky2:'#150b2f', ground:'#3b274d'}
+  ];
+
+  const player = {
+    x:80, y:GROUND-96, w:56, h:96, vx:0, vy:0, onGround:false, face:1,
+    lives:3, diamonds:0, mushrooms:0, tabs:0, completed:false, trueEnding:false,
+    invuln:0, warmFlash:0, trippy:0, meltdown:0, mushroomTimer:0, overdoseTimer:0,
+    overdoseUsed:false, deepTripTimer:0, deepLandingMessage:0, activeLead:'hero', winSound:false
+  };
+
+  const camera = {x:0, shakeX:0, shakeY:0};
+
+  const platforms = [];
+  function ground(a,b,y=GROUND){ platforms.push({x:a,y,w:b-a,h:84,type:'ground'}); }
+  function plat(x,y,w,h=24,type='log',moveX=0,moveY=0,speed=.001,phase=0){ platforms.push({x,y,w,h,type,moveX,moveY,speed,phase}); }
+
+  ground(0,760); ground(850,1350); ground(1450,2100);
+  ground(2240,2760); ground(2900,3520); ground(3670,4260); ground(4440,5200);
+  ground(5320,5620); ground(5800,6040); ground(6240,6540); ground(6750,7040); ground(7240,7580); ground(7780,8200);
+  ground(8320,8800); ground(9000,9450); ground(9620,10080); ground(10350,10860); ground(11020,11280);
+  ground(11440,11980); ground(12180,12620); ground(12820,13200); ground(13380,14200);
+
+  // Morning villa and early wandering. Longer, but still forgiving.
+  plat(420,350,190,24,'villa'); plat(650,310,170,24,'mango'); plat(960,350,150,24,'log');
+  plat(1180,330,180,24,'mango'); plat(1580,325,170,24,'vine',0,18,.002,1);
+  plat(1860,300,150,24,'tree',40,0,.0014,2);
+
+  // The Long Walk: bigger gaps, moving logs, annoying height changes.
+  plat(2380,350,170,24,'log',40,0,.0014,0); plat(2630,308,145,24,'vine',0,24,.002,3);
+  plat(3020,336,180,24,'log'); plat(3260,286,135,24,'tree',50,0,.0018,1);
+  plat(3770,340,170,24,'log',0,22,.0019,4); plat(4040,305,150,24,'vine',48,0,.0016,5);
+  plat(4540,342,170,24,'mudbank'); plat(4860,302,160,24,'tree',0,25,.002,2);
+
+  // Laughing clearing and river: logs, lily pads, weird fish jumps.
+  plat(5400,330,170,24,'golden'); plat(5680,302,150,24,'golden',45,0,.0014,0);
+  plat(5920,392,110,20,'lily',0,18,.0022,1); plat(6220,378,130,22,'riverlog',50,0,.0015,2);
+  plat(6510,365,130,22,'lily',0,20,.0024,3); plat(6810,335,160,24,'tree');
+  plat(7140,306,145,24,'vine',0,24,.002,5); plat(7450,348,170,24,'riverlog',55,0,.0016,6);
+  plat(7860,318,160,24,'golden',0,22,.0021,2);
+
+  // Deep jungle madness: narrower platforms, heavier movement.
+  plat(8400,350,150,24,'mush'); plat(8660,312,140,24,'glitchvine',55,0,.0018,0);
+  plat(9080,340,140,24,'mush',0,24,.0024,3); plat(9360,302,135,24,'glitchvine',60,0,.002,4);
+  plat(9740,350,160,24,'mudbank'); plat(10020,318,135,24,'mush',0,26,.0022,2);
+  plat(10430,338,150,24,'glitchvine',55,0,.0019,5); plat(10830,296,150,24,'mush',0,28,.0024,1);
+
+  // Evening return: tired, beautiful, still not free.
+  plat(11520,348,180,24,'return'); plat(11880,315,150,24,'speaker',50,0,.0014,0);
+  plat(12340,345,170,24,'fairy',0,20,.002,2); plat(12720,312,145,24,'setup',52,0,.0016,3);
+  plat(13120,350,180,24,'fairy'); plat(13500,325,170,24,'setup',0,18,.002,4);
+
+  const mudPuddles = [
+    {x:2520,y:GROUND-6,w:220,h:16}, {x:4540,y:GROUND-6,w:260,h:16}, {x:8360,y:GROUND-6,w:230,h:16},
+    {x:8900,y:GROUND-6,w:280,h:16}, {x:10080,y:GROUND-6,w:260,h:16}, {x:12420,y:GROUND-6,w:210,h:16}
+  ];
+
+  const lowBranches = [
+    {x:1160,y:355,w:110,h:18}, {x:1890,y:330,w:120,h:18}, {x:3420,y:318,w:130,h:18},
+    {x:5050,y:318,w:130,h:18}, {x:8720,y:314,w:140,h:18}, {x:9650,y:330,w:120,h:18},
+    {x:11740,y:334,w:135,h:18}, {x:13060,y:340,w:120,h:18}
+  ];
+
+  const bubbles = [
+    {x:780,y:GROUND-38,r:18,phase:0}, {x:1515,y:GROUND-38,r:18,phase:1.4},
+    {x:2380,y:GROUND-38,r:18,phase:2.8}, {x:4160,y:GROUND-38,r:18,phase:3.7},
+    {x:6280,y:GROUND-38,r:1

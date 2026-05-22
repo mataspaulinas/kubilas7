@@ -1,0 +1,110 @@
+  const tub={x:13860,y:348,w:270,h:125}, x=sx(tub.x), y=sy(tub.y);
+    px(x-90,y-86,430,230,'rgba(255,214,130,.08)');
+    for(let i=0;i<18;i++){
+      const lx=x-50+i*24, ly=y-44+Math.sin(now()/300+i)*6;
+      px(lx,ly,8,8,i%2?'#ffe18c':'#ff80f7');
+    }
+
+    // Empty tub until the crew actually arrives.
+    px(x-20,y+55,tub.w+40,76,palette.tubDark); px(x-12,y+48,tub.w+24,20,palette.tub);
+    px(x-6,y+62,tub.w+12,62,'#5d3b21');
+    for(let i=0;i<tub.w+8;i+=22) px(x+i-4,y+64,6,56,'#8d5b2b');
+    px(x,y+38,tub.w,38,palette.water1);
+    for(let i=0;i<tub.w;i+=28){ px(x+i+Math.sin(now()/280+i)*4,y+45,18,5,palette.water3); px(x+i+10,y+58,18,4,palette.water2); }
+
+    if(player.completed){
+      const collected = friends.filter(f=>f.collected);
+      const occupants = player.trueEnding ? 7 : Math.min(7, 1 + collected.length);
+      for(let i=0;i<occupants;i++){
+        const gx=x+16+i*34, bob=Math.sin(now()/230+i)*4;
+        const skin=i%2?'#dc8b4d':'#f2a865', hair=i%3===0?'#27242b':'#5d3922';
+        px(gx,y+15+bob,22,22,skin); px(gx+3,y+10+bob,16,7,hair);
+        px(gx+5,y+22+bob,3,3,'#24130d'); px(gx+14,y+22+bob,3,3,'#24130d');
+        px(gx+7,y+30+bob,8,2,'#7f2f24'); px(gx-5,y+37+bob,7,6,skin); px(gx+20,y+37+bob,7,6,skin);
+      }
+    } else {
+      text('EMPTY TUB WAITING',x+tub.w/2,y+18,13,'#ffd274','center');
+    }
+
+    // Speakers
+    px(x-62,y+72,42,58,'#15151c'); px(x-55,y+82,28,28,'#333345'); px(x-48,y+90,14,14,'#0b0b10');
+    px(x+tub.w+24,y+72,42,58,'#15151c'); px(x+tub.w+31,y+82,28,28,'#333345'); px(x+tub.w+38,y+90,14,14,'#0b0b10');
+
+    ctx.strokeStyle='rgba(255,235,190,.46)'; ctx.lineWidth=4;
+    for(let i=0;i<7;i++){
+      const sx1=x+24+i*36, sy1=y+22+Math.sin(now()/520+i)*5;
+      ctx.beginPath(); ctx.moveTo(sx1,sy1); ctx.bezierCurveTo(sx1-14,sy1-14,sx1+12,sy1-29,sx1-2,sy1-44); ctx.stroke();
+    }
+
+    if(player.completed){
+      for(let i=0;i<36;i++){
+        const a=now()/300+i*Math.PI*2/36, r=70+(i%6)*16;
+        drawGem(x+tub.w/2+Math.cos(a)*r, y-8+Math.sin(a*1.5)*30, i%7===0?2:1);
+      }
+      text(player.trueEnding?'MISSION COMPLETE. ALL SEVEN ARE IN THE TUB.':'TUB REACHED, BUT THE SEVEN ARE NOT COMPLETE.',x+tub.w/2,y+142,15,player.trueEnding?'#6fd472':'#ffd274','center');
+    } else {
+      text('FINAL EMPTY HOT TUB · BRING ALL SEVEN',x+tub.w/2,y+142,15,'#ffe3a6','center');
+    }
+  }
+
+  function drawHUD(){
+    const z=zoneAt(player.x), trip=player.tabs;
+    px(0,0,W,82,trip>=2?'rgba(13,0,20,.88)':'#09070c');
+    px(0,76,W,5,trip>=2?'#ff4dff':palette.gold); px(0,81,W,3,trip>=2?'#00f7ff':'#432910');
+    for(let i=0;i<player.lives;i++) drawHeart(16+i*40,17,6);
+    px(154,23,184,26,'#2a1a0d'); px(157,26,178,20,trip>=2?'#ff4dff':palette.gold); px(161,30,170,12,'#12314f');
+    px(164,33,164*(player.x/WORLD),6,trip>=2?'#00fff0':palette.blue);
+    text('HOT TUB HERO',W/2,9,30,trip>=2?'#ff9cff':palette.pink,'center');
+    text(z.name,W/2,47,16,player.deepTripTimer>0?'#dffcff':palette.cream,'center');
+
+    px(W-255,0,255,82,trip>=2?'rgba(20,0,22,.92)':'#0b0811'); px(W-259,0,4,82,trip>=2?'#00fff0':palette.gold);
+    drawGem(W-238,12,1); text(String(player.diamonds),W-200,10,22,palette.cream);
+    drawMushroom(W-148,12,.85); text(String(player.mushrooms),W-116,10,22,palette.cream);
+    drawTab(W-238,45,.85); text(String(player.tabs)+'/3',W-200,42,22,palette.cream);
+    text('Crew '+(1+friends.filter(f=>f.collected).length)+'/7',W-116,44,18,palette.cream);
+
+    const lead=activeLeadObject();
+    text('Lead: '+(lead?lead.short:'Hero'),18,55,14,'#d8d0b0');
+  }
+
+  function drawMessage(){
+    if(messageTimer<=0) return;
+    const a=Math.min(1,messageTimer/40);
+    ctx.save(); ctx.globalAlpha=a;
+    px(150,94,660,48,'rgba(8,7,10,.78)'); px(150,94,660,3,palette.gold); px(150,139,660,3,palette.gold);
+    text(message,W/2,108,17,'#ffe3a6','center');
+    ctx.restore();
+  }
+
+  function drawBottomBanner(){
+    px(16,H-64,W-32,50,player.tabs>=2?'rgba(18,0,28,.86)':'rgba(9,7,10,.84)');
+    px(16,H-64,W-32,4,player.tabs>=2?'#ff43ff':palette.gold); px(16,H-18,W-32,4,player.tabs>=2?'#00fff0':'#543213');
+    if(player.completed){
+      const msg=player.trueEnding?'TRUE ENDING: ALL 7 LEGENDS SOAKING.':'TUB REACHED, BUT THE SEVEN ARE NOT COMPLETE.';
+      text(msg,66,H-49,16,player.trueEnding?'#6fd472':'#ffd274');
+      text('Press R to replay the ritual.',66,H-27,13,'#dfddb0'); drawGem(30,H-50,1);
+    } else if(player.overdoseTimer>0){
+      drawGem(30,H-50,1); text('MDMA DIAMOND OVERLOAD. He is happily useless for a moment.',66,H-49,16,'#ffb7ff');
+      text('Breathe. Twitch. Become flooring.',66,H-27,13,'#ffd5ff');
+    } else if(player.deepTripTimer>0){
+      drawTab(30,H-53,1); text('THIRD TAB: DEEP TRIP. Control has left the building.',66,H-49,16,'#ffb7ff');
+      text('A friend will take the lead when reality returns.',66,H-27,13,'#b9ffff');
+    } else if(player.mushroomTimer>0){
+      drawMushroom(30,H-50,1); text('MUSHROOM MODE: floaty jumps, speed boost, slippery landings.',66,H-49,16,'#ffd274');
+      text('Everything breathes. The forest has opinions.',66,H-27,13,'#d4c29d');
+    } else if(player.tabs>=2){
+      drawTab(30,H-53,1); text('SECOND TAB HIT. WORLD RECOGNITION FAILURE.',66,H-49,16,'#ff9cff');
+      text('Proceed by instinct. The hot tub still exists. Probably.',66,H-27,13,'#b9ffff');
+    } else if(player.tabs>=1){
+      drawTab(30,H-53,1); text('FIRST TAB ACTIVE. Forest colors are becoming suspicious.',66,H-49,16,'#ff9cf8');
+      text('Find the crew. Do not lose Dave.',66,H-27,13,'#ffd5ff');
+    } else {
+      drawGem(30,H-50,1); text('FIND 6 FRIENDS · FORM ALL 7 · SURVIVE THE LONG FOREST · FILL THE EMPTY TUB',66,H-49,15,palette.cream);
+      text('Diamonds speed you up. 15+ triggers a very stupid happy collapse.',66,H-27,13,'#d4c29d');
+    }
+  }
+
+  function drawTripOverlays(){
+    if(player.warmFlash>0){
+      const a=Math.min(.42,player.warmFlash/60*.42), g=ctx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0,`rgba(255,160,190,${a})`); g.addColorStop(.5,`rgba(255,120,230

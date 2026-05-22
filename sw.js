@@ -1,9 +1,10 @@
-const CACHE_NAME = 'hot-tub-hero-pwa-v3-roster';
+const CACHE_NAME = 'hot-tub-hero-pwa-v4-crew-motion';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './roster-patch.js',
+  './crew-motion.js',
   './icons/hot-tub-icon.svg',
   './game/part-00.html',
   './game/part-01.html',

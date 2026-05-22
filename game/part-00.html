@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Hot Tub Hero — The Long Forest Trip</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/hot-tub-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/hot-tub-icon.svg">
+<meta name="theme-color" content="#0b1020">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hot Tub Hero">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="Hot Tub Hero">
 <style>
   :root{--gold:#cc8f2e;--cream:#ffe3a6;}
   *{box-sizing:border-box}
@@ -18,7 +27,7 @@
     user-select:none;
     -webkit-text-size-adjust:100%;
   }
-  body{position:fixed;inset:0;width:100%;height:100%;}
+  body{position:fixed;inset:0;width:100%;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
   .wrap{
     width:100vw;height:100vh;display:grid;grid-template-rows:1fr auto;
     gap:8px;padding:10px;place-items:center;
@@ -62,6 +71,15 @@
   .start-card strong{display:block;font-size:25px;line-height:1.1;color:#fff0bd;margin-bottom:8px;}
   .start-card span{display:block;font-size:13px;line-height:1.45;color:#f6d89a;margin-bottom:14px;}
   .start-card button{width:100%;min-height:56px;font-size:20px;}
+  .install-hint{
+    position:fixed;z-index:80;top:max(8px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));
+    display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;
+    border:2px solid rgba(204,143,46,.86);border-radius:14px;background:rgba(9,7,13,.84);color:#ffe3a6;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 34px rgba(0,0,0,.38);
+    font-size:12px;line-height:1.35;transform:translateY(-150%);opacity:0;transition:transform .25s ease,opacity .25s ease;pointer-events:none;
+  }
+  .install-hint.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+  .install-hint button{width:auto;min-height:34px;padding:0 12px;font-size:11px;border-width:2px;outline-width:1px;border-radius:999px;white-space:nowrap;}
 
   @media (max-width:899px){
     .wrap{
@@ -112,7 +130,7 @@
     <div id="startOverlay" class="start-overlay" aria-label="Start game">
       <div class="start-card">
         <strong>Hot Tub Hero</strong>
-        <span>Tap start once to unlock Safari audio and controls. Use ← / → on the left and JUMP on the right.</span>
+        <span>Tap start once to unlock Safari audio and controls. For app mode on iPhone: Share → Add to Home Screen.</span>
         <button id="startBtn" type="button">START</button>
       </div>
     </div>
@@ -123,6 +141,10 @@
     <button id="rightBtn">RIGHT →</button>
   </div>
 </div>
+<div id="installHint" class="install-hint" aria-live="polite">
+  <span id="installHintText">To save as an app: Safari Share → Add to Home Screen.</span>
+  <button id="installHintAction" type="button">OK</button>
+</div>
 
 <script>
 (() => {
@@ -130,4 +152,42 @@
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
   const startOverlay = document.getElementById('startOverlay');
-  const startBtn = document.getElementById('startBtn')
+  const startBtn = document.getElementById('startBtn');
+  const installHint = document.getElementById('installHint');
+  const installHintText = document.getElementById('installHintText');
+  const installHintAction = document.getElementById('installHintAction');
+  let deferredInstallPrompt = null;
+  const isStandalone = () => (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent || '');
+  function hideInstallHint(){
+    if(installHint) installHint.classList.remove('show');
+    try{ localStorage.setItem('hthInstallHintSeen','1'); }catch(_err){}
+  }
+  if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if(!isStandalone() && installHint){
+      if(installHintText) installHintText.textContent = 'Install Hot Tub Hero on this device for app mode.';
+      if(installHintAction) installHintAction.textContent = 'INSTALL';
+      installHint.classList.add('show');
+    }
+  });
+  if(installHintAction){
+    installHintAction.addEventListener('pointerdown', async event => {
+      event.preventDefault();
+      if(deferredInstallPrompt){
+        deferredInstallPrompt.prompt();
+        try{ await deferredInstallPrompt.userChoice; }catch(_err){}
+        deferredInstallPrompt = null;
+      }
+      hideInstallHint();
+    }, {passive:false});
+  }
+  if(installHint && isIOS() && !isStandalone()){
+    let seen = false;
+    try{ seen = localStorage.getItem('hthInstallHintSeen') === '1'; }catch(_err){}
+    if(!seen) setTimeout(() => installHint.classList.add('show'), 1200);
+  }

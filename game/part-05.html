@@ -1,0 +1,139 @@
+4*s,3*s,'#24130d'); px(x+29*s,y+25*s,4*s,3*s,'#24130d');
+      px(x+21*s,y+31*s,12*s,2*s,'#7f2f24'); return;
+    }
+
+    if(kind==='dj'){
+      px(x+8*s,y+35*s,38*s,24*s,'#5a3faa'); px(x+14*s,y+10*s,28*s,28*s,skin2);
+      px(x+9*s,y+7*s,38*s,7*s,'#25102d'); px(x+7*s,y+22*s,8*s,8*s,'#333'); px(x+40*s,y+22*s,8*s,8*s,'#333');
+      px(x+18*s,y+22*s,5*s,4*s,'#111'); px(x+32*s,y+22*s,5*s,4*s,'#111'); px(x+22*s,y+31*s,11*s,2*s,'#7f2f24');
+      px(x-10*s,y+46*s,14*s,12*s,'#20202b'); px(x+50*s,y+46*s,14*s,12*s,'#20202b'); return;
+    }
+
+    if(kind==='bat'){
+      // Hanging upside-down Dave.
+      px(x+14*s,y+3*s,24*s,28*s,skin2); px(x+10*s,y+26*s,32*s,34*s,shirt);
+      px(x+11*s,y,30*s,7*s,hair); px(x+18*s,y+13*s,5*s,4*s,'#de342d'); px(x+30*s,y+13*s,5*s,4*s,'#de342d');
+      px(x+20*s,y+22*s,12*s,2*s,'#7f2f24'); px(x+4*s,y+31*s,8*s,28*s,skin1); px(x+40*s,y+31*s,8*s,28*s,skin1);
+      px(x+14*s,y+58*s,8*s,18*s,'#2c4ea8'); px(x+30*s,y+58*s,8*s,18*s,'#2c4ea8'); return;
+    }
+
+    if(kind==='tree'){
+      px(x+18*s,y+42*s,16*s,42*s,'#6b4324');
+      px(x+2*s,y+20*s,50*s,32*s,'#2f7d38'); px(x+8*s,y+7*s,38*s,24*s,'#3ea44a');
+      px(x+14*s,y+22*s,25*s,25*s,skin2); px(x+19*s,y+31*s,4*s,4*s,'#111'); px(x+31*s,y+31*s,4*s,4*s,'#111'); px(x+22*s,y+39*s,11*s,2*s,'#7f2f24');
+      return;
+    }
+
+    // normal / hero
+    px(x+4*s,y+90*s,48*s,8*s,'rgba(0,0,0,.25)');
+    px(x+13*s,y+58*s,12*s,30*s,opts.pants||'#2c4ea8'); px(x+31*s,y+58*s,12*s,30*s,opts.pants2||'#22408d');
+    px(x+11*s,y+53*s,34*s,10*s,shirt); px(x+9*s,y+83*s,14*s,10*s,skin2); px(x+33*s,y+83*s,14*s,10*s,skin2);
+    px(x+10*s,y+28*s,36*s,30*s,skin2); px(x+13*s,y+31*s,30*s,11*s,skin3);
+    px(x+7*s,y+36*s,6*s,28*s,skin1); px(x+43*s,y+36*s,6*s,28*s,skin1);
+    px(x+23*s,y+24*s,10*s,8*s,skin2); px(x+12*s,y+2*s,32*s,28*s,skin2); px(x+14*s,y+4*s,28*s,10*s,skin3);
+    px(x+11*s,y+9*s,4*s,12*s,skin1); px(x+41*s,y+9*s,4*s,12*s,skin1);
+    if(kind==='hero'||kind==='heroFollower'){
+      px(x+10*s,y-3*s,32*s,8*s,cap); px(x+14*s,y-7*s,22*s,5*s,palette.cap2);
+      if(face>0){ px(x+38*s,y+1*s,16*s,6*s,cap); px(x+32*s,y+5*s,10*s,4*s,palette.cap2); }
+      else { px(x+2*s,y+1*s,16*s,6*s,cap); px(x+14*s,y+5*s,10*s,4*s,palette.cap2); }
+    } else {
+      px(x+11*s,y-2*s,32*s,8*s,hair);
+    }
+    px(x+18*s,y+12*s,6*s,3*s,'#3a2415'); px(x+31*s,y+12*s,6*s,3*s,'#3a2415');
+    px(x+19*s,y+15*s,4*s,4*s,opts.eye||'#de342d'); px(x+32*s,y+15*s,4*s,4*s,opts.eye||'#de342d');
+    px(x+26*s,y+17*s,3*s,7*s,'#cf7f45'); px(x+27*s,y+22*s,4*s,2*s,'#b86835');
+    if(kind==='hero'||kind==='heroFollower'){
+      px(x+17*s,y+22*s,20*s,8*s,palette.beard); px(x+14*s,y+26*s,26*s,5*s,'#6c4531'); px(x+18*s,y+28*s,18*s,3*s,palette.beard);
+      px(x+24*s,y+24*s,11*s,3*s,'#7d2f24'); px(x+30*s,y+26*s,5*s,2*s,'#a94c35');
+    } else {
+      px(x+22*s,y+24*s,12*s,2*s,'#7f2f24');
+    }
+  }
+
+  function friendOpts(f){
+    if(f.id==='mike') return {kind:'normal',shirt:'#6fcf79',hair:'#68401d',skin2:'#e39a5c',eye:player.tabs>=2?'#00fff0':'#111'};
+    if(f.id==='dave') return {kind:'bat',shirt:'#ff7a65',hair:'#2b1814',skin2:'#e69150'};
+    if(f.id==='tee') return {kind:'tree'};
+    if(f.id==='bank') return {kind:'mud',skin2:'#c77741'};
+    if(f.id==='klaus') return {kind:'normal',shirt:'#78b7ff',hair:'#e6ce84',skin2:'#f0a762',eye:player.tabs>=2?'#ff38f5':'#111'};
+    if(f.id==='dj') return {kind:'dj'};
+    return {kind:'normal'};
+  }
+
+  function drawFriend(f, x, y, label=false){
+    const opts=friendOpts(f);
+    if(player.tabs>=2 && f.collected) {
+      drawCharacterBase(x+Math.sin(now()/80+f.fx)*6,y, {...opts,tint:'#00fff0'}, 1);
+      drawCharacterBase(x+Math.cos(now()/70+f.fx)*-6,y, {...opts,tint:'#ff38f5'}, 1);
+    }
+    drawCharacterBase(x,y,opts,1);
+    if(label){
+      text(f.name,x+24,y-30,12,'#ffe3a6','center');
+      if(f.id==='mike') { drawGem(x+30,y+14,.7); px(x+38,y+22,8,4,'#f2a24b'); } // mango-ish sparkle
+      if(f.id==='dj') text('♪',x+60,y+8,22,'#b277ff','center');
+    }
+  }
+
+  function activeLeadObject(){
+    if(player.activeLead==='hero') return null;
+    return friends.find(f=>f.id===player.activeLead) || null;
+  }
+
+  function drawPlayer(){
+    if(player.overdoseTimer>0){
+      const x=sx(player.x), y=sy(player.y+60+Math.sin(now()/50)*4);
+      px(x,y+22,70,18,'rgba(0,0,0,.3)');
+      drawCharacterBase(x,y, {kind:'mud',skin2:'#ef9e59'}, 1);
+      text('too many diamonds',x+35,y-22,12,'#ffb7ff','center');
+      return;
+    }
+
+    const lead=activeLeadObject();
+    if(lead){
+      drawFriend(lead,sx(player.x),sy(player.y),false);
+    } else {
+      if(player.tabs>=2){
+        drawCharacterBase(sx(player.x)+Math.sin(now()/80)*14,sy(player.y)+Math.cos(now()/90)*6,{kind:'hero',tint:'#00fff0'},1);
+        drawCharacterBase(sx(player.x)-Math.cos(now()/70)*14,sy(player.y)-Math.sin(now()/85)*6,{kind:'hero',tint:'#ff38f5'},1);
+      }
+      drawCharacterBase(sx(player.x),sy(player.y),{kind:'hero'},1);
+    }
+  }
+
+  function followersList(){
+    const list=friends.filter(f=>f.collected && f.id!==player.activeLead);
+    if(player.activeLead!=='hero') list.push(heroFollower);
+    return list;
+  }
+
+  function updateFollowers(){
+    const list=followersList();
+    let tx=player.x - player.face*58, ty=player.y+10;
+    list.forEach((f,i)=>{
+      if(!Number.isFinite(f.fx)){ f.fx=tx; f.fy=ty; }
+      const desiredX=tx - player.face*(54 + i*8);
+      const desiredY=ty + Math.sin(now()/230+i)*8;
+      f.fx += (desiredX - f.fx)*0.08;
+      f.fy += (desiredY - f.fy)*0.08;
+      tx=f.fx; ty=f.fy;
+    });
+  }
+
+  function drawFollowers(){
+    followersList().forEach((f,i)=>{
+      const y=f.fy + Math.sin(now()/180+i)*5;
+      if(f.id==='heroFollower') drawCharacterBase(sx(f.fx),sy(y),{kind:'heroFollower',eye:'#ff38f5'},.82);
+      else drawFriend(f,sx(f.fx),sy(y),false);
+    });
+  }
+
+  function drawUncollectedFriends(){
+    friends.forEach(f=>{
+      if(f.collected) return;
+      let bob=Math.sin(now()/300+f.x)*5;
+      drawFriend(f,sx(f.x),sy(f.y+bob),true);
+    });
+  }
+
+  function drawHotTub(){
+  

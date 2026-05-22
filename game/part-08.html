@@ -1,0 +1,159 @@
+d ? (mushroom?.90:.78) : .94;
+    const gravity = mushroom ? .45 : .66;
+    const jumpPower = mushroom ? -17.2 : -14.3;
+
+    if(keys.left){ player.vx-=accel; player.face=-1; }
+    if(keys.right){ player.vx+=accel; player.face=1; }
+    if(!keys.left&&!keys.right) player.vx*=friction;
+    player.vx=Math.max(-maxSpeed,Math.min(maxSpeed,player.vx));
+    if(keys.jumpPressed&&player.onGround){ player.vy=jumpPower; player.onGround=false; }
+    keys.jumpPressed=false;
+
+    player.vy+=gravity; player.vy=Math.min(player.vy,16);
+
+    // horizontal collision
+    player.x+=player.vx;
+    let rect={x:player.x,y:player.y,w:player.w,h:player.h};
+    for(const p of platforms){
+      const pp=platformPos(p);
+      if(rectsOverlap(rect,pp)){
+        if(player.vx>0) player.x=pp.x-player.w;
+        else if(player.vx<0) player.x=pp.x+pp.w;
+        player.vx=0; rect.x=player.x;
+      }
+    }
+
+    // vertical collision
+    player.y+=player.vy;
+    player.onGround=false;
+    rect={x:player.x,y:player.y,w:player.w,h:player.h};
+    for(const p of platforms){
+      const pp=platformPos(p);
+      if(rectsOverlap(rect,pp)){
+        if(player.vy>0){ player.y=pp.y-player.h; player.vy=0; player.onGround=true; }
+        else if(player.vy<0){ player.y=pp.y+pp.h; player.vy=0; }
+        rect.y=player.y;
+      }
+    }
+
+    player.x=Math.max(0,Math.min(WORLD-player.w,player.x));
+    if(player.y>H+120){
+      player.lives--;
+      if(player.lives<=0) fullRestart();
+      else { resetPlayerOnly(); setMessage('The forest gently reset your confidence.',160); }
+    }
+
+    rect={x:player.x,y:player.y,w:player.w,h:player.h};
+    applyHazards(rect);
+
+    diamonds.forEach(d=>{
+      if(d.got) return;
+      if(rectsOverlap(rect,{x:d.x,y:d.y,w:26,h:26})){
+        d.got=true; player.diamonds++; player.warmFlash=60; audio.sparkle();
+        if(player.diamonds===15 && !player.overdoseUsed){
+          player.overdoseUsed=true; player.overdoseTimer=300; player.vx=0; player.vy=0;
+          setMessage('15 diamonds. Euphoria overflow. Floor mode activated.',320);
+        }
+      }
+    });
+
+    mushrooms.forEach(m=>{
+      if(m.got) return;
+      if(rectsOverlap(rect,{x:m.x,y:m.y,w:28,h:28})){
+        m.got=true; player.mushrooms++; player.mushroomTimer=1500; player.warmFlash=80;
+        setMessage('Magic mushroom: floaty jump, slippery joy, breathing trees.',260);
+      }
+    });
+
+    tabs.forEach((t,i)=>{
+      if(t.got) return;
+      if(rectsOverlap(rect,{x:t.x,y:t.y,w:30,h:30})){
+        t.got=true; player.tabs++; player.warmFlash=90; audio.tabHit(player.tabs);
+        if(player.tabs===1){ setMessage('First tab dissolves. The forest starts smiling back.',280); }
+        if(player.tabs===2){ setMessage('Second tab. Reality has lost its paperwork.',300); }
+        if(player.tabs===3){ player.deepTripTimer=500; setMessage('Third tab. Ego death loading...',300); }
+      }
+    });
+
+    friends.forEach(f=>{
+      if(f.collected) return;
+      if(rectsOverlap(rect,{x:f.x,y:f.y,w:f.w,h:f.h})){
+        f.collected=true; f.fx=f.x; f.fy=f.y; audio.friend();
+        setMessage(f.name+' joined the conga line. '+f.line,260);
+      }
+    });
+
+    const tubRect={x:13860,y:370,w:280,h:108};
+    if(rectsOverlap(rect,tubRect)){
+      player.completed=true;
+      player.trueEnding=friends.every(f=>f.collected);
+      player.x=13930; player.y=348; player.vx=0; player.vy=0; player.warmFlash=120;
+      if(!player.winSound){ audio.win(); player.winSound=true; }
+      setMessage(player.trueEnding?'All seven legends made it. The empty tub is now full.':'Tub reached, but the ritual is incomplete. Some legend is missing.',420);
+    }
+
+    updateFollowers();
+    camera.x=Math.max(0,Math.min(WORLD-W,player.x-W*.42));
+  }
+
+  function loop(){ update(); drawScene(); requestAnimationFrame(loop); }
+
+  function setKey(code,isDown){
+    if(code==='ArrowLeft'||code==='KeyA') keys.left=isDown;
+    if(code==='ArrowRight'||code==='KeyD') keys.right=isDown;
+    if(code==='ArrowUp'||code==='KeyW'||code==='Space'){
+      if(isDown&&!keys.jump) keys.jumpPressed=true;
+      keys.jump=isDown;
+    }
+    if(code==='KeyR'&&isDown) keys.restart=true;
+  }
+
+  window.addEventListener('keydown',e=>{
+    if(['ArrowLeft','ArrowRight','ArrowUp','KeyA','KeyD','KeyW','Space','KeyR'].includes(e.code)){
+      e.preventDefault(); audio.start(); setKey(e.code,true);
+    }
+  },{passive:false});
+  window.addEventListener('keyup',e=>setKey(e.code,false));
+
+  function bindButton(id,prop,jump=false){
+    const el=document.getElementById(id);
+    if(!el) return;
+    const activePointers=new Set();
+    const down=e=>{
+      e.preventDefault();
+      beginGame(e);
+      activePointers.add(e.pointerId ?? 'mouse');
+      keys[prop]=true;
+      if(jump) keys.jumpPressed=true;
+      el.classList.add('down');
+      if(el.setPointerCapture && e.pointerId !== undefined){
+        try{ el.setPointerCapture(e.pointerId); }catch(_err){}
+      }
+    };
+    const up=e=>{
+      e.preventDefault();
+      activePointers.delete(e.pointerId ?? 'mouse');
+      if(activePointers.size===0){
+        keys[prop]=false;
+        el.classList.remove('down');
+      }
+    };
+    el.addEventListener('pointerdown',down,{passive:false});
+    el.addEventListener('pointerup',up,{passive:false});
+    el.addEventListener('pointercancel',up,{passive:false});
+    el.addEventListener('lostpointercapture',up,{passive:false});
+  }
+
+  canvas.addEventListener('pointerdown',beginGame,{passive:false});
+  window.addEventListener('pointerdown',beginGame,{passive:false,once:true});
+
+  bindButton('leftBtn','left');
+  bindButton('rightBtn','right');
+  bindButton('jumpBtn','jump',true);
+
+  fullRestart();
+  loop();
+})();
+</script>
+</body>
+</html>

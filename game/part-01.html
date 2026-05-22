@@ -1,0 +1,122 @@
+;
+
+  const W = canvas.width, H = canvas.height;
+  const WORLD = 14200;
+  const GROUND = 456;
+  const now = () => performance.now();
+
+  const keys = {left:false,right:false,jump:false,jumpPressed:false,restart:false};
+
+  const audio = (() => {
+    let ctxA=null, master=null, delay=null, delayGain=null, started=false, mode='techno', step=0, next=0, timer=null, noiseBuffer=null;
+
+    function makeNoise(){
+      const len = ctxA.sampleRate * .25;
+      const b = ctxA.createBuffer(1,len,ctxA.sampleRate);
+      const d = b.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+      return b;
+    }
+    function ensure(){
+      if(started) return true;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return false;
+      ctxA = new AC();
+      master = ctxA.createGain(); master.gain.value = .16;
+      const comp = ctxA.createDynamicsCompressor();
+      comp.threshold.value=-18; comp.ratio.value=6; comp.attack.value=.005; comp.release.value=.18;
+      delay = ctxA.createDelay(.5); delay.delayTime.value=.18;
+      delayGain = ctxA.createGain(); delayGain.gain.value=.10;
+      delay.connect(delayGain); delayGain.connect(delay); delayGain.connect(comp);
+      master.connect(comp); comp.connect(ctxA.destination);
+      noiseBuffer = makeNoise();
+      next = ctxA.currentTime + .08;
+      timer = setInterval(schedule,24);
+      started = true;
+      return true;
+    }
+    function start(){ if(!ensure()) return; if(ctxA.state==='suspended') ctxA.resume(); }
+    function setMode(m){
+      mode = m;
+      if(master){
+        const target = m==='cosmic' ? .13 : m==='meltdown' ? .16 : m==='psy' ? .19 : .16;
+        master.gain.setTargetAtTime(target,ctxA.currentTime,.12);
+      }
+    }
+    function env(t,dur,peak,a=.004,r=.08){
+      const g=ctxA.createGain();
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+a);
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur+r);
+      return g;
+    }
+    function tone(f,t,dur,type,gain,dest=master,detune=0){
+      const o=ctxA.createOscillator(), g=env(t,dur,gain);
+      o.type=type; o.frequency.setValueAtTime(f,t); o.detune.setValueAtTime(detune,t);
+      o.connect(g); g.connect(dest); o.start(t); o.stop(t+dur+.16);
+    }
+    function filt(f,t,dur,type,gain,cutoff,q=8,toDelay=false){
+      const o=ctxA.createOscillator(), fl=ctxA.createBiquadFilter(), g=env(t,dur,gain,.006,.12);
+      o.type=type; o.frequency.setValueAtTime(f,t);
+      fl.type='lowpass'; fl.frequency.setValueAtTime(cutoff,t);
+      fl.frequency.exponentialRampToValueAtTime(Math.max(70,cutoff*.35),t+dur);
+      fl.Q.value=q;
+      o.connect(fl); fl.connect(g); g.connect(master); if(toDelay) g.connect(delay);
+      o.start(t); o.stop(t+dur+.18);
+    }
+    function noise(t,dur,gain,cut=9000,hp=3000){
+      const s=ctxA.createBufferSource(), h=ctxA.createBiquadFilter(), l=ctxA.createBiquadFilter(), g=env(t,dur,gain,.002,.04);
+      s.buffer=noiseBuffer; h.type='highpass'; h.frequency.value=hp; l.type='lowpass'; l.frequency.value=cut;
+      s.connect(h); h.connect(l); l.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.07);
+    }
+    function kick(t,psy=false){
+      const o=ctxA.createOscillator(), g=ctxA.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(psy?96:82,t); o.frequency.exponentialRampToValueAtTime(psy?42:38,t+(psy?.105:.14));
+      g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(psy?.62:.50,t+.004); g.gain.exponentialRampToValueAtTime(.0001,t+(psy?.16:.22));
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+.25);
+      if(psy) noise(t,.018,.08,2200,900);
+    }
+    function techno(s,t){
+      if(s%4===0) kick(t,false);
+      if(s%2===1) noise(t,.025,.045,9500,5200);
+      if([0,3,6,8,10,13].includes(s%16)){
+        const base=[55,65.41,73.42,82.41][Math.floor(s/16)%4];
+        filt(base,t,.12,'square',.11,520,8);
+      }
+      if(s%16===4||s%16===12) [220,277.18,329.63,415.3].forEach((f,i)=>filt(f,t+i*.004,.10,'square',.028,1800,3,true));
+    }
+    function psy(s,t,broken=false,cosmic=false){
+      if(cosmic){
+        if(s%8===0) kick(t,true);
+        const seq=[261.63,329.63,392,523.25,659.25,783.99,1046.5];
+        if(s%2===0) tone(seq[s%seq.length],t,.12,'triangle',.045,delay);
+        if(s%4===2) noise(t,.055,.045,12000,5000);
+        return;
+      }
+      if(s%4===0) kick(t,true);
+      if(s%2===1) noise(t,.018,broken?.10:.07,broken?13000:10500,6000);
+      if(s%4!==0) filt((broken?58.27:61.74)*(broken&&s%7===0?2:1),t,.085,'sawtooth',broken?.15:.13,broken?1350:980,broken?13:10);
+      const arp=broken?[523.25,784,739.99,987.77,659.25,1174.66,1046.5]:[392,523.25,587.33,783.99,698.46,587.33,523.25,440];
+      if(s%2===0||broken) filt(arp[s%arp.length],t,broken?.055:.07,'square',broken?.052:.04,broken?4200:2800,broken?18:11,true);
+      if(broken&&s%5===0) tone(140+Math.random()*900,t,.045,'sawtooth',.03,delay,Math.random()*80-40);
+    }
+    function schedule(){
+      if(!ctxA||ctxA.state==='closed') return;
+      const horizon=ctxA.currentTime+.14;
+      while(next<horizon){
+        const bpm = mode==='cosmic'?104:mode==='meltdown'?158:mode==='psy'?148:126;
+        if(mode==='techno') techno(step,next);
+        if(mode==='psy') psy(step,next,false,false);
+        if(mode==='meltdown') psy(step,next,true,false);
+        if(mode==='cosmic') psy(step,next,false,true);
+        step++; next += (60/bpm)/4;
+      }
+    }
+    function sparkle(){
+      if(!ensure()) return; const t=ctxA.currentTime+.01;
+      [1046.5,1318.51,1567.98].forEach((f,i)=>tone(f,t+i*.045,.055,'triangle',.05,delay));
+    }
+    function tabHit(count){
+      if(!ensure()) return; const t=ctxA.currentTime+.01, wild=count>=2, cosmic=count>=3;
+      const notes=cosmic?[196,261.63,392,783.99,1174.66,1760]:wild?[220,330,660,990,1480,1960]:[330,495,660,990];
+      notes.forEach((f,i)=>filt(f,t+i*.035,cosmic?.18:wild?.12:.09,cosmic?'triangle':wild?'sawtooth':'square',cosmic?.07:wild

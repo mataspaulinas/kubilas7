@@ -28,6 +28,7 @@
   </main>
   <script src="roster-patch.js?v=2026-05-22-roster-1"></script>
   <script src="crew-motion.js?v=2026-05-22-crew-motion-1"></script>
+  <script src="tub-ending.js?v=2026-05-22-tub-ending-1"></script>
   <script>
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -65,7 +66,7 @@
       </style>`;
       try{
         const html = (await Promise.all(parts.map(async path=>{
-          const response = await fetch(path + '?v=2026-05-22-crew-motion-1', {cache:'no-store'});
+          const response = await fetch(path + '?v=2026-05-22-tub-ending-1', {cache:'no-store'});
           if(!response.ok) throw new Error(`${path}: ${response.status} ${response.statusText}`);
           return response.text();
         }))).join('');
@@ -74,6 +75,9 @@
           : (html.includes('touch-landscape-control-fix') ? html : html.replace('</head>', `${touchLandscapeControlFix}</head>`));
         if(window.enhanceCrewMotionHtml){
           patchedHtml = window.enhanceCrewMotionHtml(patchedHtml);
+        }
+        if(window.enhanceTubEndingHtml){
+          patchedHtml = window.enhanceTubEndingHtml(patchedHtml);
         }
         document.open();
         document.write(patchedHtml);
